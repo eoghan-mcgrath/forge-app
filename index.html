@@ -93,6 +93,10 @@
   .food-del { color: var(--text3); font-size: 18px; cursor: pointer; padding: 6px; }
   .food-del:active { color: var(--red); }
 
+  /* FORM BUTTON — small red pill beside exercise name */
+  .form-pill { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 10px; background: rgba(255,90,90,0.12); border: 1px solid rgba(255,90,90,0.25); color: var(--red); font-size: 10px; font-weight: 700; text-decoration: none; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+  .form-pill:active { background: rgba(255,90,90,0.25); }
+
   /* SETTINGS */
   .settings-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
   .settings-item:last-child { border-bottom: none; }
@@ -157,27 +161,6 @@
   .btn-pair { display: flex; gap: 10px; margin-top: 24px; }
   .exit-btn { flex: 1; padding: 15px; background: var(--bg3); color: var(--text2); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
   .exit-btn:active { background: var(--bg4); }
-
-  /* COUNTDOWN BANNER */
-  .countdown-banner { display: none; background: var(--accent-dim); border: 1px solid rgba(200,240,96,0.3); border-radius: var(--radius-sm); padding: 14px 20px; margin-bottom: 16px; text-align: center; }
-  .countdown-banner.show { display: block; }
-  .countdown-num { font-size: 52px; font-weight: 800; color: var(--accent); line-height: 1; }
-  .countdown-lbl { font-size: 13px; color: var(--text2); margin-top: 4px; font-weight: 500; }
-
-  /* SET TIMER */
-  .set-timer-row { display: flex; align-items: center; gap: 10px; margin: 6px 0 10px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--bg4); }
-  .set-timer-row.work-phase { background: rgba(200,240,96,0.08); border: 1px solid rgba(200,240,96,0.15); }
-  .set-timer-row.rest-phase { background: rgba(96,160,240,0.08); border: 1px solid rgba(96,160,240,0.15); }
-  .set-timer-label { font-size: 12px; font-weight: 700; flex: 1; }
-  .set-timer-label.work { color: var(--accent); }
-  .set-timer-label.rest { color: var(--blue); }
-  .set-timer-bar { flex: 2; height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
-  .set-timer-fill { height: 100%; border-radius: 3px; transition: width 1s linear; }
-  .set-timer-fill.work { background: var(--accent); }
-  .set-timer-fill.rest { background: var(--blue); }
-  .set-timer-num { font-size: 18px; font-weight: 800; min-width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
-  .set-timer-num.work { color: var(--accent); }
-  .set-timer-num.rest { color: var(--blue); }
 
   /* CREATE WORKOUT */
   .ex-build-row { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
@@ -249,8 +232,11 @@
     <div class="section-title">My Workouts</div>
     <div id="workoutList"></div>
     <button class="start-btn" style="margin-top:4px;" onclick="openCreateWorkout()"><i class="ti ti-plus"></i> Create New Workout</button>
-    <div class="section-title" style="margin-top:24px;">Workout History</div>
-    <div class="card" id="workoutHistory" style="padding:8px 16px;"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px;margin-bottom:0;">
+      <div class="section-title" style="margin:0;">Workout History</div>
+      <button onclick="openBacklogWorkout()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:5px 12px;color:var(--text2);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><i class="ti ti-clock-plus"></i> Backlog</button>
+    </div>
+    <div class="card" id="workoutHistory" style="padding:8px 16px;margin-top:10px;"></div>
   </div>
 
   <!-- NUTRITION -->
@@ -288,7 +274,10 @@
       </div>
       <button class="start-btn" onclick="logFood()"><i class="ti ti-plus"></i> Log Food</button>
     </div>
-    <div class="section-title">Today's Log</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;margin-bottom:10px;">
+      <div class="section-title" style="margin:0;">Today's Log</div>
+      <button onclick="openBacklogNutrition()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:5px 12px;color:var(--text2);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><i class="ti ti-clock-plus"></i> Backlog</button>
+    </div>
     <div class="card" id="foodLog" style="padding:8px 16px;"></div>
   </div>
 
@@ -401,8 +390,8 @@
       <button class="modal-close" onclick="closeModal('previewModal')"><i class="ti ti-x"></i></button>
       <div><div class="modal-title" id="pvTitle">Workout</div><div class="modal-sub" id="pvMeta"></div></div>
     </div>
-    <button class="start-btn" style="margin-bottom:20px;" onclick="startFromPreview()"><i class="ti ti-player-play"></i> Start Workout</button>
     <div id="pvExercises"></div>
+    <button class="start-btn" style="margin-top:24px;" onclick="startFromPreview()"><i class="ti ti-player-play"></i> Start Workout</button>
   </div>
 </div>
 
@@ -418,10 +407,6 @@
       <div style="width:40px;"></div>
     </div>
     <div class="progress-bar-wrap"><div class="progress-bar"><div class="progress-fill" id="awProgress" style="width:0%"></div></div></div>
-    <div class="countdown-banner" id="countdownBanner">
-      <div class="countdown-num" id="countdownNum">5</div>
-      <div class="countdown-lbl">Get ready…</div>
-    </div>
     <div id="awExercises" style="margin-top:16px;"></div>
     <div class="btn-pair">
       <button class="exit-btn" onclick="exitWorkout()"><i class="ti ti-door-exit"></i> Exit</button>
@@ -444,6 +429,55 @@
       <button class="ghost-btn" style="flex:1;" onclick="addExRow('custom')"><i class="ti ti-pencil"></i> Custom Exercise</button>
     </div>
     <button class="start-btn" onclick="saveWorkout()"><i class="ti ti-device-floppy"></i> Save Workout</button>
+  </div>
+</div>
+
+<!-- BACKLOG WORKOUT MODAL -->
+<div class="modal" id="backlogWorkoutModal">
+  <div class="modal-inner">
+    <div class="modal-header">
+      <button class="modal-close" onclick="closeModal('backlogWorkoutModal')"><i class="ti ti-x"></i></button>
+      <div><div class="modal-title">Log Past Workout</div><div class="modal-sub">Add a workout to your history</div></div>
+    </div>
+    <div style="margin-bottom:10px;font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">Date</div>
+    <input class="inp" type="date" id="backlogDate" style="margin-bottom:14px;">
+    <div style="margin-bottom:10px;font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">Workout</div>
+    <select class="inp" id="backlogWorkoutSelect" style="margin-bottom:14px;">
+    </select>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <div style="flex:1;">
+        <div style="margin-bottom:6px;font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">Duration (min)</div>
+        <input class="inp" type="number" id="backlogDuration" placeholder="45" inputmode="numeric">
+      </div>
+      <div style="flex:1;">
+        <div style="margin-bottom:6px;font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">Note (optional)</div>
+        <input class="inp" type="text" id="backlogNote" placeholder="Felt great">
+      </div>
+    </div>
+    <button class="start-btn" onclick="saveBacklogWorkout()"><i class="ti ti-check"></i> Save to History</button>
+  </div>
+</div>
+
+<!-- BACKLOG NUTRITION MODAL -->
+<div class="modal" id="backlogNutritionModal">
+  <div class="modal-inner">
+    <div class="modal-header">
+      <button class="modal-close" onclick="closeModal('backlogNutritionModal')"><i class="ti ti-x"></i></button>
+      <div><div class="modal-title">Log Past Nutrition</div><div class="modal-sub">Add food to a previous day</div></div>
+    </div>
+    <div style="margin-bottom:10px;font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">Date</div>
+    <input class="inp" type="date" id="backlogNutDate" style="margin-bottom:14px;">
+    <div style="margin-bottom:10px;font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">Food Name</div>
+    <input class="inp" id="backlogFoodName" placeholder="e.g. Oats, Coffee, Chicken" style="margin-bottom:10px;">
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <input class="inp" type="number" id="backlogFoodCals" placeholder="Calories" inputmode="numeric">
+      <input class="inp" type="number" id="backlogFoodProtein" placeholder="Protein (g)" inputmode="numeric">
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:18px;">
+      <input class="inp" type="number" id="backlogFoodCarbs" placeholder="Carbs (g)" inputmode="numeric">
+      <input class="inp" type="number" id="backlogFoodFat" placeholder="Fat (g)" inputmode="numeric">
+    </div>
+    <button class="start-btn" onclick="saveBacklogFood()"><i class="ti ti-check"></i> Save to Log</button>
   </div>
 </div>
 
@@ -677,50 +711,14 @@ function startFromPreview(){ closeModal('previewModal'); if(previewId) startWork
 function sectionIcon(sec){ var m={warmup:'run',stretch:'yoga',main:'barbell',core:'circles',cooldown:'moon'}; return m[sec]||'activity'; }
 
 /* ─── ACTIVE WORKOUT ─────────────────────────────────────── */
-var setTimerIv = null;
-var setTimerSecs = 0;
-var setTimerTotal = 0;
-var setTimerPhase = 'work'; // 'work' or 'rest'
-var setTimerKey = null; // current "ei_si" key
-
-var WORK_SECS = 35;  // per set work timer
-var REST_SECS = 30;  // rest between sets
-var WARMUP_SECS = 30; // warm-up / cool-down exercises
-
 function startWorkout(id){
   activeWorkout=state.workouts.find(function(w){ return w.id===id; }); if(!activeWorkout) return;
   setsDone={}; restIvs={};
-  setTimerKey=null;
-  clearInterval(setTimerIv);
   workoutStart=Date.now();
   document.getElementById('awTitle').textContent=activeWorkout.name;
   document.getElementById('awProgress').style.width='0%';
   renderActiveWorkout();
   openModal('activeModal');
-  // 5-second countdown
-  var countEl=document.getElementById('countdownNum');
-  var banner=document.getElementById('countdownBanner');
-  var exEl=document.getElementById('awExercises');
-  var count=5;
-  countEl.textContent=count;
-  banner.classList.add('show');
-  exEl.style.opacity='0.3';
-  clearInterval(workoutTimerIv);
-  var cdIv=setInterval(function(){
-    count--;
-    if(count<=0){
-      clearInterval(cdIv);
-      banner.classList.remove('show');
-      exEl.style.opacity='1';
-      startWorkoutTimer();
-      startSetTimer(0,0); // kick off first set timer
-      return;
-    }
-    countEl.textContent=count;
-  },1000);
-}
-
-function startWorkoutTimer(){
   clearInterval(workoutTimerIv);
   workoutTimerIv=setInterval(function(){
     var e=Math.floor((Date.now()-workoutStart)/1000), m=Math.floor(e/60), s=e%60;
@@ -739,109 +737,41 @@ function renderActiveWorkout(){
       lastSec=sec;
     }
     var name=getExName(ex), rows='';
-    var isWarmCool=(sec==='warmup'||sec==='stretch'||sec==='cooldown');
+    var ytUrl='https://www.youtube.com/results?search_query='+encodeURIComponent(name+' correct form technique');
     for(var s=0;s<ex.sets;s++){
-      var timerDur=isWarmCool?WARMUP_SECS:WORK_SECS;
-      rows+='<div id="setblock_'+ei+'_'+s+'" style="margin-bottom:6px;">'+
-        '<div class="set-row">'+
-          '<button class="set-done-btn" id="set'+ei+'_'+s+'" onclick="markSetDone('+ei+','+s+','+totalSets+')"><i class="ti ti-check"></i></button>'+
-          '<div class="set-label">Set '+(s+1)+'</div>'+
-          '<input class="set-inp" type="number" placeholder="kg" inputmode="decimal">'+
-          '<input class="set-inp" type="number" placeholder="'+ex.reps+' reps" inputmode="numeric">'+
-        '</div>'+
-        '<div class="set-timer-row" id="settimer_'+ei+'_'+s+'">'+
-          '<span class="set-timer-label work" id="sttlbl_'+ei+'_'+s+'">Work</span>'+
-          '<div class="set-timer-bar"><div class="set-timer-fill work" id="sttbar_'+ei+'_'+s+'" style="width:100%"></div></div>'+
-          '<span class="set-timer-num work" id="sttnum_'+ei+'_'+s+'">'+timerDur+'s</span>'+
-        '</div>'+
+      rows+='<div class="set-row">'+
+        '<button class="set-done-btn" id="set'+ei+'_'+s+'" onclick="toggleSet('+ei+','+s+','+totalSets+')"><i class="ti ti-check"></i></button>'+
+        '<div class="set-label">Set '+(s+1)+'</div>'+
+        '<input class="set-inp" type="number" placeholder="kg" inputmode="decimal">'+
+        '<input class="set-inp" type="number" placeholder="'+ex.reps+' reps" inputmode="numeric">'+
         '</div>';
     }
-    html+='<div style="margin-bottom:20px;" id="exblock_'+ei+'">'+
-      '<div style="font-size:16px;font-weight:700;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">'+name+
+    html+='<div style="margin-bottom:20px;">'+
+      '<div style="font-size:16px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
+      '<span style="flex:1;">'+name+'</span>'+
+      '<a class="form-pill" href="'+ytUrl+'" target="_blank"><i class="ti ti-brand-youtube" style="font-size:10px;"></i> Form</a>'+
       '<span style="font-size:12px;color:var(--text2);font-weight:500;">'+ex.sets+'×'+ex.reps+'</span></div>'+
       rows+
+      '<div class="rest-banner" id="rest'+ei+'"><div class="rest-time-big" id="restTime'+ei+'">60</div><div class="rest-lbl">Rest — next set coming up</div></div>'+
       '</div>';
   });
   el.innerHTML=html;
 }
 
-// Start the timer for a specific set (ei = exercise index, si = set index)
-function startSetTimer(ei, si){
-  clearInterval(setTimerIv);
-  setTimerKey=ei+'_'+si;
-  if(!activeWorkout||ei>=activeWorkout.exercises.length) return;
-  var ex=activeWorkout.exercises[ei];
-  var isWarmCool=(ex.section==='warmup'||ex.section==='stretch'||ex.section==='cooldown');
-  setTimerTotal = isWarmCool ? WARMUP_SECS : WORK_SECS;
-  setTimerSecs  = setTimerTotal;
-  setTimerPhase = 'work';
-  updateSetTimerUI(ei, si, setTimerSecs, setTimerTotal, 'work');
-
-  setTimerIv=setInterval(function(){
-    setTimerSecs--;
-    if(setTimerSecs<0){
-      if(setTimerPhase==='work'){
-        // switch to rest
-        setTimerPhase='rest';
-        setTimerTotal=REST_SECS;
-        setTimerSecs=REST_SECS;
-        updateSetTimerUI(ei,si,setTimerSecs,setTimerTotal,'rest');
-      } else {
-        // rest done — auto-advance to next set or exercise
-        clearInterval(setTimerIv);
-        var nextSi=si+1;
-        if(nextSi<ex.sets){
-          startSetTimer(ei,nextSi);
-        } else {
-          var nextEi=ei+1;
-          if(nextEi<activeWorkout.exercises.length){
-            startSetTimer(nextEi,0);
-          }
-        }
-      }
-      return;
-    }
-    updateSetTimerUI(ei,si,setTimerSecs,setTimerTotal,setTimerPhase);
-  },1000);
-}
-
-function updateSetTimerUI(ei,si,secs,total,phase){
-  var lbl=document.getElementById('sttlbl_'+ei+'_'+si);
-  var bar=document.getElementById('sttbar_'+ei+'_'+si);
-  var num=document.getElementById('sttnum_'+ei+'_'+si);
-  var row=document.getElementById('settimer_'+ei+'_'+si);
-  if(!lbl||!bar||!num||!row) return;
-  var pct=Math.max(0,(secs/total)*100);
-  var isWork=(phase==='work');
-  row.className='set-timer-row '+(isWork?'work-phase':'rest-phase');
-  lbl.className='set-timer-label '+(isWork?'work':'rest');
-  lbl.textContent=isWork?'Work':'Rest';
-  bar.className='set-timer-fill '+(isWork?'work':'rest');
-  bar.style.width=pct+'%';
-  num.className='set-timer-num '+(isWork?'work':'rest');
-  num.textContent=secs+'s';
-}
-
-function markSetDone(ei,si,total){
+function toggleSet(ei,si,total){
   var key=ei+'_'+si, btn=document.getElementById('set'+key);
   setsDone[key]=!setsDone[key];
   if(setsDone[key]){
-    btn.classList.add('done');
+    btn.classList.add('done'); startRestTimer(ei);
     var done=Object.values(setsDone).filter(Boolean).length;
     document.getElementById('awProgress').style.width=Math.round(done/total*100)+'%';
-    // advance timer to next set/exercise
-    clearInterval(setTimerIv);
-    var ex=activeWorkout.exercises[ei];
-    var nextSi=si+1;
-    if(nextSi<ex.sets){
-      startSetTimer(ei,nextSi);
-    } else {
-      var nextEi=ei+1;
-      if(nextEi<activeWorkout.exercises.length) startSetTimer(nextEi,0);
-    }
-  } else {
-    btn.classList.remove('done');
-  }
+  } else { btn.classList.remove('done'); }
+}
+function startRestTimer(ei){
+  var el=document.getElementById('rest'+ei), tEl=document.getElementById('restTime'+ei);
+  el.classList.add('show'); var secs=60; tEl.textContent=secs;
+  if(restIvs[ei]) clearInterval(restIvs[ei]);
+  restIvs[ei]=setInterval(function(){ secs--; tEl.textContent=secs; if(secs<=0){clearInterval(restIvs[ei]);el.classList.remove('show');} },1000);
 }
 function completeWorkout(){
   clearInterval(workoutTimerIv);
@@ -858,7 +788,6 @@ function exitWorkout(){
 }
 function cleanupWorkout(){
   clearInterval(workoutTimerIv);
-  clearInterval(setTimerIv);
   Object.keys(restIvs).forEach(function(k){ clearInterval(restIvs[k]); });
   restIvs={}; setsDone={}; activeWorkout=null;
   closeModal('activeModal'); renderWorkoutScreen(); renderHome();
@@ -888,8 +817,8 @@ function renderNutrition(){
 }
 function logFood(){
   var name=document.getElementById('foodName').value.trim();
+  if(!name){ alert('Please enter a food name.'); return; }
   var cals=parseFloat(document.getElementById('foodCals').value)||0;
-  if(!name||!cals){ alert('Enter a food name and calories.'); return; }
   state.foodLog.push({name:name,cals:cals,protein:parseFloat(document.getElementById('foodProtein').value)||0,carbs:parseFloat(document.getElementById('foodCarbs').value)||0,fat:parseFloat(document.getElementById('foodFat').value)||0,date:todayKey});
   ['foodName','foodCals','foodProtein','foodCarbs','foodFat'].forEach(function(id){ document.getElementById(id).value=''; });
   saveState(); renderNutrition(); renderHomeNutrition();
@@ -992,6 +921,68 @@ function saveWorkout(){
   if(!newExRows.length){ alert('Add at least one exercise'); return; }
   state.workouts.push({id:state.nextWorkoutId++,name:name,exercises:JSON.parse(JSON.stringify(newExRows))});
   saveState(); closeModal('createModal'); renderWorkoutScreen();
+}
+
+/* ─── BACKLOG ─────────────────────────────────────────────── */
+function openBacklogWorkout(){
+  // set date to today by default
+  var today = new Date().toISOString().split('T')[0];
+  document.getElementById('backlogDate').value = today;
+  document.getElementById('backlogDuration').value = '';
+  document.getElementById('backlogNote').value = '';
+  // populate workout dropdown
+  var sel = document.getElementById('backlogWorkoutSelect');
+  sel.innerHTML = state.workouts.map(function(w){ return '<option value="'+w.id+'">'+w.name+'</option>'; }).join('');
+  openModal('backlogWorkoutModal');
+}
+
+function saveBacklogWorkout(){
+  var dateVal = document.getElementById('backlogDate').value;
+  if(!dateVal){ alert('Please pick a date.'); return; }
+  var workoutId = parseInt(document.getElementById('backlogWorkoutSelect').value);
+  var w = state.workouts.find(function(w){ return w.id===workoutId; });
+  var duration = parseInt(document.getElementById('backlogDuration').value)||30;
+  var note = document.getElementById('backlogNote').value.trim();
+  var d = new Date(dateVal+'T12:00:00');
+  var dateKey = d.toDateString();
+  state.workoutHistory.push({
+    name: (w?w.name:'Workout')+(note?' — '+note:''),
+    date: dateKey,
+    duration: duration,
+    exercises: w?w.exercises.length:0,
+    backlogged: true
+  });
+  saveState();
+  closeModal('backlogWorkoutModal');
+  renderWorkoutScreen();
+  renderHome();
+}
+
+function openBacklogNutrition(){
+  var today = new Date().toISOString().split('T')[0];
+  document.getElementById('backlogNutDate').value = today;
+  ['backlogFoodName','backlogFoodCals','backlogFoodProtein','backlogFoodCarbs','backlogFoodFat'].forEach(function(id){ document.getElementById(id).value=''; });
+  openModal('backlogNutritionModal');
+}
+
+function saveBacklogFood(){
+  var dateVal = document.getElementById('backlogNutDate').value;
+  if(!dateVal){ alert('Please pick a date.'); return; }
+  var name = document.getElementById('backlogFoodName').value.trim();
+  if(!name){ alert('Please enter a food name.'); return; }
+  var d = new Date(dateVal+'T12:00:00');
+  var dateKey = d.toDateString();
+  state.foodLog.push({
+    name: name,
+    cals: parseFloat(document.getElementById('backlogFoodCals').value)||0,
+    protein: parseFloat(document.getElementById('backlogFoodProtein').value)||0,
+    carbs: parseFloat(document.getElementById('backlogFoodCarbs').value)||0,
+    fat: parseFloat(document.getElementById('backlogFoodFat').value)||0,
+    date: dateKey
+  });
+  saveState();
+  closeModal('backlogNutritionModal');
+  renderNutrition();
 }
 
 /* ─── INIT ───────────────────────────────────────────────── */
