@@ -158,6 +158,27 @@
   .exit-btn { flex: 1; padding: 15px; background: var(--bg3); color: var(--text2); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
   .exit-btn:active { background: var(--bg4); }
 
+  /* COUNTDOWN BANNER */
+  .countdown-banner { display: none; background: var(--accent-dim); border: 1px solid rgba(200,240,96,0.3); border-radius: var(--radius-sm); padding: 14px 20px; margin-bottom: 16px; text-align: center; }
+  .countdown-banner.show { display: block; }
+  .countdown-num { font-size: 52px; font-weight: 800; color: var(--accent); line-height: 1; }
+  .countdown-lbl { font-size: 13px; color: var(--text2); margin-top: 4px; font-weight: 500; }
+
+  /* SET TIMER */
+  .set-timer-row { display: flex; align-items: center; gap: 10px; margin: 6px 0 10px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--bg4); }
+  .set-timer-row.work-phase { background: rgba(200,240,96,0.08); border: 1px solid rgba(200,240,96,0.15); }
+  .set-timer-row.rest-phase { background: rgba(96,160,240,0.08); border: 1px solid rgba(96,160,240,0.15); }
+  .set-timer-label { font-size: 12px; font-weight: 700; flex: 1; }
+  .set-timer-label.work { color: var(--accent); }
+  .set-timer-label.rest { color: var(--blue); }
+  .set-timer-bar { flex: 2; height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .set-timer-fill { height: 100%; border-radius: 3px; transition: width 1s linear; }
+  .set-timer-fill.work { background: var(--accent); }
+  .set-timer-fill.rest { background: var(--blue); }
+  .set-timer-num { font-size: 18px; font-weight: 800; min-width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
+  .set-timer-num.work { color: var(--accent); }
+  .set-timer-num.rest { color: var(--blue); }
+
   /* CREATE WORKOUT */
   .ex-build-row { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
   .ex-build-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -380,8 +401,8 @@
       <button class="modal-close" onclick="closeModal('previewModal')"><i class="ti ti-x"></i></button>
       <div><div class="modal-title" id="pvTitle">Workout</div><div class="modal-sub" id="pvMeta"></div></div>
     </div>
+    <button class="start-btn" style="margin-bottom:20px;" onclick="startFromPreview()"><i class="ti ti-player-play"></i> Start Workout</button>
     <div id="pvExercises"></div>
-    <button class="start-btn" style="margin-top:24px;" onclick="startFromPreview()"><i class="ti ti-player-play"></i> Start Workout</button>
   </div>
 </div>
 
@@ -397,6 +418,10 @@
       <div style="width:40px;"></div>
     </div>
     <div class="progress-bar-wrap"><div class="progress-bar"><div class="progress-fill" id="awProgress" style="width:0%"></div></div></div>
+    <div class="countdown-banner" id="countdownBanner">
+      <div class="countdown-num" id="countdownNum">5</div>
+      <div class="countdown-lbl">Get ready…</div>
+    </div>
     <div id="awExercises" style="margin-top:16px;"></div>
     <div class="btn-pair">
       <button class="exit-btn" onclick="exitWorkout()"><i class="ti ti-door-exit"></i> Exit</button>
@@ -652,14 +677,50 @@ function startFromPreview(){ closeModal('previewModal'); if(previewId) startWork
 function sectionIcon(sec){ var m={warmup:'run',stretch:'yoga',main:'barbell',core:'circles',cooldown:'moon'}; return m[sec]||'activity'; }
 
 /* ─── ACTIVE WORKOUT ─────────────────────────────────────── */
+var setTimerIv = null;
+var setTimerSecs = 0;
+var setTimerTotal = 0;
+var setTimerPhase = 'work'; // 'work' or 'rest'
+var setTimerKey = null; // current "ei_si" key
+
+var WORK_SECS = 35;  // per set work timer
+var REST_SECS = 30;  // rest between sets
+var WARMUP_SECS = 30; // warm-up / cool-down exercises
+
 function startWorkout(id){
   activeWorkout=state.workouts.find(function(w){ return w.id===id; }); if(!activeWorkout) return;
   setsDone={}; restIvs={};
+  setTimerKey=null;
+  clearInterval(setTimerIv);
   workoutStart=Date.now();
   document.getElementById('awTitle').textContent=activeWorkout.name;
   document.getElementById('awProgress').style.width='0%';
   renderActiveWorkout();
   openModal('activeModal');
+  // 5-second countdown
+  var countEl=document.getElementById('countdownNum');
+  var banner=document.getElementById('countdownBanner');
+  var exEl=document.getElementById('awExercises');
+  var count=5;
+  countEl.textContent=count;
+  banner.classList.add('show');
+  exEl.style.opacity='0.3';
+  clearInterval(workoutTimerIv);
+  var cdIv=setInterval(function(){
+    count--;
+    if(count<=0){
+      clearInterval(cdIv);
+      banner.classList.remove('show');
+      exEl.style.opacity='1';
+      startWorkoutTimer();
+      startSetTimer(0,0); // kick off first set timer
+      return;
+    }
+    countEl.textContent=count;
+  },1000);
+}
+
+function startWorkoutTimer(){
   clearInterval(workoutTimerIv);
   workoutTimerIv=setInterval(function(){
     var e=Math.floor((Date.now()-workoutStart)/1000), m=Math.floor(e/60), s=e%60;
@@ -678,38 +739,109 @@ function renderActiveWorkout(){
       lastSec=sec;
     }
     var name=getExName(ex), rows='';
+    var isWarmCool=(sec==='warmup'||sec==='stretch'||sec==='cooldown');
     for(var s=0;s<ex.sets;s++){
-      rows+='<div class="set-row">'+
-        '<button class="set-done-btn" id="set'+ei+'_'+s+'" onclick="toggleSet('+ei+','+s+','+totalSets+')"><i class="ti ti-check"></i></button>'+
-        '<div class="set-label">Set '+(s+1)+'</div>'+
-        '<input class="set-inp" type="number" placeholder="kg" inputmode="decimal">'+
-        '<input class="set-inp" type="number" placeholder="'+ex.reps+' reps" inputmode="numeric">'+
+      var timerDur=isWarmCool?WARMUP_SECS:WORK_SECS;
+      rows+='<div id="setblock_'+ei+'_'+s+'" style="margin-bottom:6px;">'+
+        '<div class="set-row">'+
+          '<button class="set-done-btn" id="set'+ei+'_'+s+'" onclick="markSetDone('+ei+','+s+','+totalSets+')"><i class="ti ti-check"></i></button>'+
+          '<div class="set-label">Set '+(s+1)+'</div>'+
+          '<input class="set-inp" type="number" placeholder="kg" inputmode="decimal">'+
+          '<input class="set-inp" type="number" placeholder="'+ex.reps+' reps" inputmode="numeric">'+
+        '</div>'+
+        '<div class="set-timer-row" id="settimer_'+ei+'_'+s+'">'+
+          '<span class="set-timer-label work" id="sttlbl_'+ei+'_'+s+'">Work</span>'+
+          '<div class="set-timer-bar"><div class="set-timer-fill work" id="sttbar_'+ei+'_'+s+'" style="width:100%"></div></div>'+
+          '<span class="set-timer-num work" id="sttnum_'+ei+'_'+s+'">'+timerDur+'s</span>'+
+        '</div>'+
         '</div>';
     }
-    html+='<div style="margin-bottom:20px;">'+
-      '<div style="font-size:16px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">'+name+
+    html+='<div style="margin-bottom:20px;" id="exblock_'+ei+'">'+
+      '<div style="font-size:16px;font-weight:700;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">'+name+
       '<span style="font-size:12px;color:var(--text2);font-weight:500;">'+ex.sets+'×'+ex.reps+'</span></div>'+
       rows+
-      '<div class="rest-banner" id="rest'+ei+'"><div class="rest-time-big" id="restTime'+ei+'">60</div><div class="rest-lbl">Rest — next set coming up</div></div>'+
       '</div>';
   });
   el.innerHTML=html;
 }
 
-function toggleSet(ei,si,total){
+// Start the timer for a specific set (ei = exercise index, si = set index)
+function startSetTimer(ei, si){
+  clearInterval(setTimerIv);
+  setTimerKey=ei+'_'+si;
+  if(!activeWorkout||ei>=activeWorkout.exercises.length) return;
+  var ex=activeWorkout.exercises[ei];
+  var isWarmCool=(ex.section==='warmup'||ex.section==='stretch'||ex.section==='cooldown');
+  setTimerTotal = isWarmCool ? WARMUP_SECS : WORK_SECS;
+  setTimerSecs  = setTimerTotal;
+  setTimerPhase = 'work';
+  updateSetTimerUI(ei, si, setTimerSecs, setTimerTotal, 'work');
+
+  setTimerIv=setInterval(function(){
+    setTimerSecs--;
+    if(setTimerSecs<0){
+      if(setTimerPhase==='work'){
+        // switch to rest
+        setTimerPhase='rest';
+        setTimerTotal=REST_SECS;
+        setTimerSecs=REST_SECS;
+        updateSetTimerUI(ei,si,setTimerSecs,setTimerTotal,'rest');
+      } else {
+        // rest done — auto-advance to next set or exercise
+        clearInterval(setTimerIv);
+        var nextSi=si+1;
+        if(nextSi<ex.sets){
+          startSetTimer(ei,nextSi);
+        } else {
+          var nextEi=ei+1;
+          if(nextEi<activeWorkout.exercises.length){
+            startSetTimer(nextEi,0);
+          }
+        }
+      }
+      return;
+    }
+    updateSetTimerUI(ei,si,setTimerSecs,setTimerTotal,setTimerPhase);
+  },1000);
+}
+
+function updateSetTimerUI(ei,si,secs,total,phase){
+  var lbl=document.getElementById('sttlbl_'+ei+'_'+si);
+  var bar=document.getElementById('sttbar_'+ei+'_'+si);
+  var num=document.getElementById('sttnum_'+ei+'_'+si);
+  var row=document.getElementById('settimer_'+ei+'_'+si);
+  if(!lbl||!bar||!num||!row) return;
+  var pct=Math.max(0,(secs/total)*100);
+  var isWork=(phase==='work');
+  row.className='set-timer-row '+(isWork?'work-phase':'rest-phase');
+  lbl.className='set-timer-label '+(isWork?'work':'rest');
+  lbl.textContent=isWork?'Work':'Rest';
+  bar.className='set-timer-fill '+(isWork?'work':'rest');
+  bar.style.width=pct+'%';
+  num.className='set-timer-num '+(isWork?'work':'rest');
+  num.textContent=secs+'s';
+}
+
+function markSetDone(ei,si,total){
   var key=ei+'_'+si, btn=document.getElementById('set'+key);
   setsDone[key]=!setsDone[key];
   if(setsDone[key]){
-    btn.classList.add('done'); startRestTimer(ei);
+    btn.classList.add('done');
     var done=Object.values(setsDone).filter(Boolean).length;
     document.getElementById('awProgress').style.width=Math.round(done/total*100)+'%';
-  } else { btn.classList.remove('done'); }
-}
-function startRestTimer(ei){
-  var el=document.getElementById('rest'+ei), tEl=document.getElementById('restTime'+ei);
-  el.classList.add('show'); var secs=60; tEl.textContent=secs;
-  if(restIvs[ei]) clearInterval(restIvs[ei]);
-  restIvs[ei]=setInterval(function(){ secs--; tEl.textContent=secs; if(secs<=0){clearInterval(restIvs[ei]);el.classList.remove('show');} },1000);
+    // advance timer to next set/exercise
+    clearInterval(setTimerIv);
+    var ex=activeWorkout.exercises[ei];
+    var nextSi=si+1;
+    if(nextSi<ex.sets){
+      startSetTimer(ei,nextSi);
+    } else {
+      var nextEi=ei+1;
+      if(nextEi<activeWorkout.exercises.length) startSetTimer(nextEi,0);
+    }
+  } else {
+    btn.classList.remove('done');
+  }
 }
 function completeWorkout(){
   clearInterval(workoutTimerIv);
@@ -726,6 +858,7 @@ function exitWorkout(){
 }
 function cleanupWorkout(){
   clearInterval(workoutTimerIv);
+  clearInterval(setTimerIv);
   Object.keys(restIvs).forEach(function(k){ clearInterval(restIvs[k]); });
   restIvs={}; setsDone={}; activeWorkout=null;
   closeModal('activeModal'); renderWorkoutScreen(); renderHome();
